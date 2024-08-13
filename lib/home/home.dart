@@ -50,7 +50,7 @@ class _MyHomePageState extends State<MyHomePage> {
 /*          STORE DATA TO LOCAL STORAGE its not will store to database ----------- -------- -------- -*/
   static List<Results> _dataMl = [];
 
-  final ModelTFLite modelMl =
+  final ModelTFLite modelML =
       ModelTFLite(dataResults: _dataMl, dataModel: _dataModel);
 
   Future<void> _getData() async {
