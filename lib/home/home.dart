@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:responsibel/data/data_user_input.dart';
@@ -6,10 +7,12 @@ import 'package:responsibel/home/show_modal.dart';
 import 'package:http/http.dart' as http;
 import 'package:responsibel/model_ML/model.dart';
 
-Future<List<Results>> dataFetch(String name, String start) async {
+Future<List<Results>> dataFetch(
+    {required String name, required String start}) async {
   var response = await http.get(
     Uri.parse(
-        "https://api.polygon.io/v2/aggs/ticker/$name/range/1/day/$start/2024-08-01?adjusted=false&sort=desc&apiKey=3Nq8xQxfTb8xwIWUhGtaXbqhQUL_OHn4"),
+      "https://api.polygon.io/v2/aggs/ticker/$name/range/1/day/$start/2024-08-01?adjusted=false&sort=desc&apiKey=3Nq8xQxfTb8xwIWUhGtaXbqhQUL_OHn4",
+    ),
   );
 
   if (response.statusCode == 200) {
@@ -41,44 +44,41 @@ class _MyHomePageState extends State<MyHomePage> {
       category: ColumnStock.open,
     ),
     DataModel(
-        nameStock: 'nvda',
-        dateStart: DateTime(2024, 07, 08),
-        dateEnd: DateTime.now(),
-        category: ColumnStock.close),
+      nameStock: "goog",
+      dateStart: DateTime(2024, 08, 02),
+      dateEnd: DateTime.now(),
+      category: ColumnStock.open,
+    ),
   ];
 
 /*          STORE DATA TO LOCAL STORAGE its not will store to database ----------- -------- -------- -*/
   static List<Results> _dataMl = [];
 
-  final ModelTFLite modelML =
-      ModelTFLite(dataResults: _dataMl, dataModel: _dataModel);
+/* above this code for Model tfLite flutter*/
+  late ModelTFLite modelML;
+/*above for queue data to fetch*/
 
   Future<void> _getData() async {
-    try {
-      // this error has solve becaus data before 2024 is int therefore dataML is improve
-      /*below this dataFetch will be arise exception int not sigh to doubel if datetime sart begin in yer 2023 */
+    // this error has solve becaus data before 2024 is int therefore dataML is improve
+    /*below this dataFetch will be arise exception int not sigh to doubel if datetime sart begin in yer 2023 */
 
-      // String name = _dataModel.first.nameStock.toUpperCase();
-      // String start = _dataModel.first.dateStart.toString().substring(0, 10);
-      // final data = await dataFetch(
-      //   name,
-      //   start,
-      // );
-
-      var data;
-      for (var datas in _dataModel) {
+    List<Results> data;
+    for (var datas in _dataModel) {
+      try {
         data = await dataFetch(
-            datas.nameStock, datas.dateStart.toString().toUpperCase());
+          name: datas.nameStock.toUpperCase(),
+          start: "2024-01-01",
+        );
+
+        setState(() {
+          _dataMl = data;
+          modelML = ModelTFLite(dataResults: _dataMl, dataModel: _dataModel);
+          print("${_dataMl.length} data Lenght");
+        });
+      } catch (e, strackTrace) {
+        print('$e  -----------------E-------------e');
+        print('$strackTrace S');
       }
-      // var data;
-      setState(() {
-        _dataMl = data;
-      });
-      print("${_dataMl.length}  ```````````````````````````````````````````");
-      print('${_dataModel.first.nameStock.toUpperCase()}   start');
-    } catch (e, strackTrace) {
-      print('$e  ---------------------------------------------------------e');
-      print('$strackTrace S');
     }
   }
 

@@ -35,3 +35,10 @@ final columnStock = {
   ColumnStock.open: "Open",
   ColumnStock.close: "Close",
 };
+
+class DataTemporary {
+  final String nameStock;
+  final DateTime dataStart;
+
+  const DataTemporary({required this.dataStart, required this.nameStock});
+}

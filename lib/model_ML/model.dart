@@ -3,7 +3,7 @@ import 'package:responsibel/data/data_model.dart';
 import 'package:responsibel/data/data_user_input.dart';
 import 'dart:math';
 import 'dart:async';
-//import 'package:tflite_flutter/tflite_flutter.dart';
+import 'package:tflite_flutter/tflite_flutter.dart';
 
 class ModelTFLite {
   final List<Results> dataResults;
@@ -15,12 +15,11 @@ class ModelTFLite {
 
   final queue = ListQueue<List<double>>();
   static final List<DataMachineLearning> finishDataML = [];
-
   static final List<DataMachineLearning> dataMachineLearning = [];
 
-  void data() {}
+  List<List<double>> newDataTem = [];
 
-  Stream<void> dataStream() async* {
+  Stream<List<double>> dataStream() async* {
     List<double> listDataOpen = [];
     List<double> listDataClose = [];
 
@@ -28,27 +27,59 @@ class ModelTFLite {
       for (var addQueue in dataResults) {
         if (columnStock[data.category]! == 'Open') {
           listDataOpen.add(addQueue.open);
-
-          await Future.delayed(const Duration(seconds: 5));
-          queue.add(listDataOpen);
-          return;
         } else {
           listDataClose.add(addQueue.close);
-
-          await Future.delayed(const Duration(seconds: 5));
-          queue.add(listDataClose);
-          return;
         }
       }
     }
+
+    if (listDataOpen.isNotEmpty) {
+      await Future.delayed(const Duration(seconds: 5));
+      yield listDataOpen;
+    } else {
+      await Future.delayed(const Duration(seconds: 5));
+      yield listDataClose;
+    }
   }
 
-  void process() async {
+  List<List<T>> reshape<T>(
+      {required List<List<T>> list, required col, required int row}) {
+    List<List<T>> result =
+        List.generate(row, (_) => List.filled(col, 0.0 as T));
+    try {
+      int indexRow = 0;
+      int indexColumn = 0;
+      for (var i = 0; i < row; i++) {
+        for (var j = 0; j < col; j++) {
+          if (indexRow < list.length && indexColumn < list[indexRow].length) {
+            result[i][j] = list[indexRow][indexColumn];
+          } else {
+            result[i][j] = 0.0 as T;
+          }
+
+          indexColumn++;
+          if (indexColumn >= list[indexRow].length) {
+            indexColumn = 0;
+            indexRow++;
+          }
+
+          if (indexRow >= list.length) break;
+        }
+      }
+    } catch (e, stackTrace) {
+      print(e);
+      print(stackTrace);
+    }
+    return result;
+  }
+
+  void process() {
     var dataStreams = dataStream();
     // ignore: unused_local_variable
-    late StreamSubscription<void> subscription;
+    late StreamSubscription<List<double>> subscription;
     subscription = dataStreams.listen(
-      (_) async {
+      (event) async {
+        queue.add(event);
         while (queue.isNotEmpty) {
           final List<double> dataList = [];
           for (var data in queue) {
@@ -64,12 +95,12 @@ class ModelTFLite {
             normalisasiData.add((data - minData) / (maxData - minData));
           }
 
-          int nSteps = 5;
-          List<double> newData = [];
+          int nSteps = 3;
+          List<List<double>> newData = [];
 
-          for (var i = 0; i < normalisasiData.length - nSteps + 1; i++) {
+          for (var i = (normalisasiData.length) - nSteps - 1; i > 0; i--) {
             var tem = normalisasiData.sublist(i, i + nSteps);
-            newData.addAll(tem);
+            newData.add(tem);
           }
 
           final reshapeShape = [8, 1];
@@ -80,10 +111,13 @@ class ModelTFLite {
           if (newData.length % requiredLength != 0) {
             newData = newData.sublist(0, -newData.length % requiredLength);
           }
-          /* below reshpe data in newData*/
-          // final input = newData.reshape([8, 1]);
 
-          // final List<List<double>> output = [];
+          newData = reshape(list: newData, col: 1, row: 8);
+
+          /* below reshpe data in newData*/
+          final input = newData.reshape(reshapeShape);
+
+          //final List<List<double>> output = [];
 
           /*below  for model machine learning  */
           // interperter model tflite.Interpreter.fromAsset('asset/model.tflite')
@@ -97,15 +131,20 @@ class ModelTFLite {
 
           // below for send data to database
           /*
-       below code for send data to list <dataModel> 
+         below code for send data to list <dataModel> 
         DataModel.add(DataModelprediction:predictionStock,LastOpen:lastStock))
         */
 
-          print("${dataList.last} ${newData.length}---tem");
+          print("${input.shape}  datalist");
+          print(" ${newData.shape} newdata");
+          print(" ${newData.shape}---tem");
+          //print("queue");
           queue.removeFirst();
         }
       },
-      onDone: () => print(queue.length),
+      onDone: () {
+        print("${queue.length} queue");
+      },
     );
   }
 }

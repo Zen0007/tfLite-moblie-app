@@ -21,3 +21,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+
+/* if error --not shriking run flutter clean and flutter build apk*/
