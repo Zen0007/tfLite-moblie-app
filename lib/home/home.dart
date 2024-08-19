@@ -1,29 +1,15 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:responsibel/data/data_results.dart';
 import 'package:responsibel/data/data_user_input.dart';
+import 'package:responsibel/fetch_api/fetch_api_stock.dart';
 import 'package:responsibel/home/home_view.dart';
 import 'package:responsibel/home/show_modal.dart';
-import 'package:http/http.dart' as http;
 import 'package:responsibel/model_ML/model.dart';
 
-Future<List<Results>> dataFetch(
-    {required String name, required String start}) async {
-  var response = await http.get(
-    Uri.parse(
-      "https://api.polygon.io/v2/aggs/ticker/$name/range/1/day/$start/2024-08-01?adjusted=false&sort=desc&apiKey=3Nq8xQxfTb8xwIWUhGtaXbqhQUL_OHn4",
-    ),
-  );
-
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
-    List<dynamic> temData = data['results'];
-    print(temData.length);
-    return temData.map((json) => Results.fromJson(json)).toList();
-  } else {
-    throw Exception("data not found");
-  }
-}
+/*  data have to store to data base thas is data from user in folder show_modal.dart 
+   data form ml in model.dart
+*/
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -52,14 +38,13 @@ class _MyHomePageState extends State<MyHomePage> {
   ];
 
 /*          STORE DATA TO LOCAL STORAGE its not will store to database ----------- -------- -------- -*/
-  static List<Results> _dataMl = [];
+  static List<Results> _dataForMl = [];
 
 /* above this code for Model tfLite flutter*/
   late ModelTFLite modelML;
-/*above for queue data to fetch*/
 
   Future<void> _getData() async {
-    // this error has solve becaus data before 2024 is int therefore dataML is improve
+    // this error has solve becaus data before 2024 is int therefore dataML is solve
     /*below this dataFetch will be arise exception int not sigh to doubel if datetime sart begin in yer 2023 */
 
     List<Results> data;
@@ -71,9 +56,8 @@ class _MyHomePageState extends State<MyHomePage> {
         );
 
         setState(() {
-          _dataMl = data;
-          modelML = ModelTFLite(dataResults: _dataMl, dataModel: _dataModel);
-          print("${_dataMl.length} data Lenght");
+          _dataForMl = data;
+          modelML = ModelTFLite(dataResults: _dataForMl, dataModel: _dataModel);
         });
       } catch (e, strackTrace) {
         print('$e  -----------------E-------------e');
@@ -86,6 +70,12 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     _getData();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _dataForMl;
+    super.dispose();
   }
 
   void _addData(DataModel data) {
@@ -113,6 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
         Expanded(
           child: HomeView(
             dataModel: _dataModel,
+            dataOutput: temporaryData,
           ),
         ),
       ],
@@ -133,6 +124,7 @@ class _MyHomePageState extends State<MyHomePage> {
               color: Colors.blue,
               child: HomeView(
                 dataModel: _dataModel,
+                dataOutput: temporaryData,
               ),
             ),
           ),

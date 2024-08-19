@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:responsibel/data/data_model.dart';
 import 'package:responsibel/data/data_user_input.dart';
 
 class CardList extends StatelessWidget {
-  const CardList({super.key, required this.dataModel});
+  const CardList(
+      {super.key, required this.dataModel, required this.dataOutput});
   final DataModel dataModel;
+  final DataMachineLearning dataOutput;
 
   @override
   Widget build(BuildContext context) {
@@ -53,15 +56,15 @@ class CardList extends StatelessWidget {
             const SizedBox(
               height: 20,
             ),
-            const Row(
+            Row(
               children: [
                 Expanded(
                     child: Center(
-                  child: Text("last closing"),
+                  child: Text("${dataOutput.lastDate}"),
                 )),
                 Expanded(
                     child: Center(
-                  child: Text("prediction"),
+                  child: Text("${dataOutput.predictionStock}"),
                 ))
               ],
             ),

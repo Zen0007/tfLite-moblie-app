@@ -1,23 +1,38 @@
 import 'dart:collection';
 import 'package:responsibel/data/data_model.dart';
+import 'package:responsibel/data/data_results.dart';
 import 'package:responsibel/data/data_user_input.dart';
 import 'dart:math';
 import 'dart:async';
 import 'package:tflite_flutter/tflite_flutter.dart';
+
+final List<DataMachineLearning> temporaryData = [];
 
 class ModelTFLite {
   final List<Results> dataResults;
   final List<DataModel> dataModel;
   ModelTFLite({required this.dataResults, required this.dataModel}) {
     dataStream();
-    process();
+    //process();
+    fetchData();
   }
 
   final queue = ListQueue<List<double>>();
-  static final List<DataMachineLearning> finishDataML = [];
-  static final List<DataMachineLearning> dataMachineLearning = [];
 
-  List<List<double>> newDataTem = [];
+  void fetchData() async {
+    /*below code prepose for get data from results proses machine Learning*/
+    late List<DataMachineLearning> temData;
+    try {
+      var temDatas = process();
+      temDatas.then(
+        (value) => temData = value,
+      );
+    } catch (e, strackTrace) {
+      print(e);
+      print(strackTrace);
+    }
+    print("${temData.length}  data");
+  }
 
   Stream<List<double>> dataStream() async* {
     List<double> listDataOpen = [];
@@ -34,10 +49,10 @@ class ModelTFLite {
     }
 
     if (listDataOpen.isNotEmpty) {
-      await Future.delayed(const Duration(seconds: 5));
+      await Future.delayed(const Duration(seconds: 1));
       yield listDataOpen;
     } else {
-      await Future.delayed(const Duration(seconds: 5));
+      await Future.delayed(const Duration(seconds: 2));
       yield listDataClose;
     }
   }
@@ -46,39 +61,40 @@ class ModelTFLite {
       {required List<List<T>> list, required col, required int row}) {
     List<List<T>> result =
         List.generate(row, (_) => List.filled(col, 0.0 as T));
-    try {
-      int indexRow = 0;
-      int indexColumn = 0;
-      for (var i = 0; i < row; i++) {
-        for (var j = 0; j < col; j++) {
-          if (indexRow < list.length && indexColumn < list[indexRow].length) {
-            result[i][j] = list[indexRow][indexColumn];
-          } else {
-            result[i][j] = 0.0 as T;
-          }
 
-          indexColumn++;
-          if (indexColumn >= list[indexRow].length) {
-            indexColumn = 0;
-            indexRow++;
-          }
-
-          if (indexRow >= list.length) break;
+    int indexRow = 0;
+    int indexColumn = 0;
+    for (var i = 0; i < row; i++) {
+      for (var j = 0; j < col; j++) {
+        if (indexRow < list.length && indexColumn < list[indexRow].length) {
+          result[i][j] = list[indexRow][indexColumn];
+        } else {
+          result[i][j] = 0.0 as T;
         }
+
+        indexColumn++;
+        if (indexColumn >= list[indexRow].length) {
+          indexColumn = 0;
+          indexRow++;
+        }
+
+        if (indexRow >= list.length) break;
       }
-    } catch (e, stackTrace) {
-      print(e);
-      print(stackTrace);
     }
+
     return result;
   }
 
-  void process() {
+  Future<List<DataMachineLearning>> process() {
+    late List<DataMachineLearning> pred = [];
+
+    final Completer<List<DataMachineLearning>> completer =
+        Completer<List<DataMachineLearning>>();
+
     var dataStreams = dataStream();
-    // ignore: unused_local_variable
-    late StreamSubscription<List<double>> subscription;
-    subscription = dataStreams.listen(
+    dataStreams.listen(
       (event) async {
+        pred = [];
         queue.add(event);
         while (queue.isNotEmpty) {
           final List<double> dataList = [];
@@ -87,8 +103,6 @@ class ModelTFLite {
           }
           double minData = dataList.reduce(min);
           double maxData = dataList.reduce(max);
-          print(minData);
-          print(maxData);
 
           List<double> normalisasiData = [];
           for (var data in dataList) {
@@ -116,18 +130,25 @@ class ModelTFLite {
 
           /* below reshpe data in newData*/
           final input = newData.reshape(reshapeShape);
-
-          //final List<List<double>> output = [];
+          final output = List.filled(1, 0).reshape([1, 1]);
 
           /*below  for model machine learning  */
-          // interperter model tflite.Interpreter.fromAsset('asset/model.tflite')
+          Interpreter model =
+              await Interpreter.fromAsset('assets/model.tflite');
+
+          try {
+            model.run(input, output);
+            print("$pred  comperter");
+
+            model.close();
+          } catch (e) {
+            print("$e  e");
+          }
 
           /* beloe for prediction data from user*/
-          //model.run(newData,output)
-
-          // double prediction = output.last[0];
-          // // double predictionStock = prediction * 0.9773;
-          // // double lastDateStock = dataList.last;
+          double prediction = output.first[0];
+          double predictionStock = prediction * 0.977;
+          double lastDateStock = dataList.last;
 
           // below for send data to database
           /*
@@ -135,31 +156,20 @@ class ModelTFLite {
         DataModel.add(DataModelprediction:predictionStock,LastOpen:lastStock))
         */
 
-          print("${input.shape}  datalist");
-          print(" ${newData.shape} newdata");
-          print(" ${newData.shape}---tem");
-          //print("queue");
+          pred.add(DataMachineLearning(
+              lastDate: lastDateStock, predictionStock: predictionStock));
+
+          print("$prediction output model");
+          print(" $predictionStock prediction");
+          print(" $lastDateStock ---lastTime");
+          print("${pred.length} pred2");
           queue.removeFirst();
         }
+        completer.complete(pred);
       },
-      onDone: () {
-        print("${queue.length} queue");
-      },
+      onDone: () {},
     );
+    print("${pred.length}  pred");
+    return completer.future;
   }
-}
-
-class Results {
-  final double open;
-  final double close;
-
-  Results({
-    required this.open,
-    required this.close,
-  });
-
-  factory Results.fromJson(Map<String, dynamic> json) => Results(
-        open: (json['o'] as num).toDouble(),
-        close: (json['c'] as num).toDouble(),
-      );
 }
