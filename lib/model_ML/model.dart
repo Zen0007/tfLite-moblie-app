@@ -13,26 +13,9 @@ class ModelTFLite {
   final List<DataModel> dataModel;
   ModelTFLite({required this.dataResults, required this.dataModel}) {
     dataStream();
-    //process();
-    fetchData();
   }
 
   final queue = ListQueue<List<double>>();
-
-  void fetchData() async {
-    /*below code prepose for get data from results proses machine Learning*/
-    late List<DataMachineLearning> temData;
-    try {
-      var temDatas = process();
-      temDatas.then(
-        (value) => temData = value,
-      );
-    } catch (e, strackTrace) {
-      print(e);
-      print(strackTrace);
-    }
-    print("${temData.length}  data");
-  }
 
   Stream<List<double>> dataStream() async* {
     List<double> listDataOpen = [];
@@ -85,16 +68,12 @@ class ModelTFLite {
     return result;
   }
 
-  Future<List<DataMachineLearning>> process() {
-    late List<DataMachineLearning> pred = [];
-
-    final Completer<List<DataMachineLearning>> completer =
-        Completer<List<DataMachineLearning>>();
+  Stream<List<DataMachineLearning>> process() async* {
+    final List<DataMachineLearning> pred = [];
 
     var dataStreams = dataStream();
     dataStreams.listen(
       (event) async {
-        pred = [];
         queue.add(event);
         while (queue.isNotEmpty) {
           final List<double> dataList = [];
@@ -165,11 +144,16 @@ class ModelTFLite {
           print("${pred.length} pred2");
           queue.removeFirst();
         }
-        completer.complete(pred);
       },
       onDone: () {},
     );
     print("${pred.length}  pred");
-    return completer.future;
+    yield pred;
   }
+}
+
+Stream<List<DataMachineLearning>> resultsDataFromModel(
+    List<Results> dataResults, List<DataModel> dataModel) {
+  List<DataMachineLearning> data = [];
+  yield data;
 }
