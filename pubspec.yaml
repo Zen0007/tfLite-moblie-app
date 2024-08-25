@@ -41,6 +41,7 @@ dependencies:
   yahoo_finance_data_reader:  ^1.0.10
   tflite_flutter: ^0.10.4
   http: ^1.2.2
+ # matrices: ^1.2.7
 
 
 
@@ -68,7 +69,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/model.tflite
+    - assets/
     # - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

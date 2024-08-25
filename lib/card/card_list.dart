@@ -60,11 +60,11 @@ class CardList extends StatelessWidget {
               children: [
                 Expanded(
                     child: Center(
-                  child: Text("${dataOutput.lastDate}"),
+                  child: Text(dataOutput.lastDate.toStringAsFixed(3)),
                 )),
                 Expanded(
                     child: Center(
-                  child: Text("${dataOutput.predictionStock}"),
+                  child: Text(dataOutput.predictionStock.toStringAsFixed(3)),
                 ))
               ],
             ),

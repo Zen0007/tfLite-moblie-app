@@ -8,6 +8,11 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 
 final List<DataMachineLearning> temporaryData = [];
 
+/*
+for his class i uses stream for fill data to queue so data which to queue can be dealay and model can be predick data not togeder and cause hampered to show screen
+but i have problem while i hard code data in data model because results from model have gap betwen data 1 and 2 so i want to try not uses stream for delay data 
+*/
+
 class ModelTFLite {
   final List<Results> dataResults;
   final List<DataModel> dataModel;

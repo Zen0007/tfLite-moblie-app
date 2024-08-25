@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:responsibel/data/data_model.dart';
 import 'package:responsibel/data/data_results.dart';
 import 'package:responsibel/data/data_user_input.dart';
 import 'package:responsibel/fetch_api/fetch_api_stock.dart';
 import 'package:responsibel/home/home_view.dart';
 import 'package:responsibel/home/show_modal.dart';
-import 'package:responsibel/model_ML/model.dart';
+import 'package:responsibel/model_ML/try_not_uses_stream.dart';
 
 /*  data have to store to data base thas is data from user in folder show_modal.dart 
    data form ml in model.dart
@@ -22,60 +23,59 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   /*======================{ABOVE get data from local storage}=====================*/
-  static final List<DataModel> _dataModel = [
-    DataModel(
-      nameStock: "aapl",
-      dateStart: DateTime(2024, 07, 25),
-      dateEnd: DateTime.now(),
-      category: ColumnStock.open,
-    ),
-    DataModel(
-      nameStock: "goog",
-      dateStart: DateTime(2024, 08, 02),
-      dateEnd: DateTime.now(),
-      category: ColumnStock.open,
-    ),
-  ];
+  static final List<DataModel> _dataModel = [];
 
-/*          STORE DATA TO LOCAL STORAGE its not will store to database ----------- -------- -------- -*/
-  static List<Results> _dataForMl = [];
+/*----- ------- -----STORE DATA TO LOCAL STORAGE its not will store to database ----------- -------- -------- -*/
 
 /* above this code for Model tfLite flutter*/
-  late ModelTFLite modelML;
+  List<DataMachineLearning> dataML = [];
+  List<Results> _dataForModel = [];
 
-  Future<void> _getData() async {
+  Future<void> _getDataApi() async {
     // this error has solve becaus data before 2024 is int therefore dataML is solve
     /*below this dataFetch will be arise exception int not sigh to doubel if datetime sart begin in yer 2023 */
 
     List<Results> data;
+
     for (var datas in _dataModel) {
       try {
         data = await dataFetch(
           name: datas.nameStock.toUpperCase(),
-          start: "2024-01-01",
+          start: "${datas.dateStart}",
         );
 
         setState(() {
-          _dataForMl = data;
-          modelML = ModelTFLite(dataResults: _dataForMl, dataModel: _dataModel);
+          _dataForModel = data;
+          getDataModel(_dataForModel, _dataModel);
         });
+        print('${data.first.close}   results');
+        print("len model ${_dataModel.length}");
       } catch (e, strackTrace) {
         print('$e  -----------------E-------------e');
         print('$strackTrace S');
+        print("${_dataModel.first.dateStart.toString().substring(0, 10)} len");
       }
+    }
+  }
+
+  void getDataModel(List<Results> dataForMl, List<DataModel> dataModel) async {
+    try {
+      List<DataMachineLearning> model =
+          await dataMachineLearning(dataForMl, dataModel);
+      setState(() {
+        dataML = model;
+      });
+      print(dataML.length);
+    } catch (e, strackTrace) {
+      print("$e ((((()))))");
+      print(strackTrace);
     }
   }
 
   @override
   void initState() {
-    _getData();
     super.initState();
-  }
-
-  @override
-  void dispose() {
-    _dataForMl;
-    super.dispose();
+    _getDataApi();
   }
 
   void _addData(DataModel data) {
@@ -103,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
         Expanded(
           child: HomeView(
             dataModel: _dataModel,
-            dataOutput: temporaryData,
+            dataOutput: _dataForModel,
           ),
         ),
       ],
@@ -122,10 +122,7 @@ class _MyHomePageState extends State<MyHomePage> {
             flex: 2,
             child: Container(
               color: Colors.blue,
-              child: HomeView(
-                dataModel: _dataModel,
-                dataOutput: temporaryData,
-              ),
+              child: HomeView(dataModel: _dataModel, dataOutput: _dataForModel),
             ),
           ),
         ],
