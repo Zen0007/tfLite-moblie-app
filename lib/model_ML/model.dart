@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'package:responsibel/data/data_model.dart';
 import 'package:responsibel/data/data_results.dart';
 import 'package:responsibel/data/data_user_input.dart';
+import 'package:responsibel/fetch_api/fetch_api_stock.dart';
 import 'dart:math';
 import 'dart:async';
 import 'package:tflite_flutter/tflite_flutter.dart';
@@ -9,9 +10,9 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 final List<DataMachineLearning> temporaryData = [];
 
 class ModelTFLite {
-  final List<Results> dataResults;
+  //final List<Results> dataResults;
   final List<DataModel> dataModel;
-  ModelTFLite({required this.dataResults, required this.dataModel}) {
+  ModelTFLite({required this.dataModel}) {
     dataStream();
   }
 
@@ -22,7 +23,9 @@ class ModelTFLite {
     List<double> listDataClose = [];
 
     for (var data in dataModel) {
-      for (var addQueue in dataResults) {
+      List<Results> dataFromStock = await dataFetch(
+          name: data.nameStock.toUpperCase(), start: "${data.dateStart}");
+      for (var addQueue in dataFromStock) {
         if (columnStock[data.category]! == 'Open') {
           listDataOpen.add(addQueue.open);
         } else {
@@ -32,10 +35,8 @@ class ModelTFLite {
     }
 
     if (listDataOpen.isNotEmpty) {
-      await Future.delayed(const Duration(seconds: 1));
       yield listDataOpen;
     } else {
-      await Future.delayed(const Duration(seconds: 2));
       yield listDataClose;
     }
   }
@@ -152,8 +153,9 @@ class ModelTFLite {
   }
 }
 
-Stream<List<DataMachineLearning>> resultsDataFromModel(
-    List<Results> dataResults, List<DataModel> dataModel) {
-  List<DataMachineLearning> data = [];
-  yield data;
-}
+// Stream<List<DataMachineLearning>> resultsDataFromModel(
+//     List<Results> dataResults, List<DataModel> dataModel) {
+
+//   List<DataMachineLearning> data = [];
+//   yield data;
+// }

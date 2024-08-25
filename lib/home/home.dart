@@ -1,8 +1,5 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:responsibel/data/data_results.dart';
 import 'package:responsibel/data/data_user_input.dart';
-import 'package:responsibel/fetch_api/fetch_api_stock.dart';
 import 'package:responsibel/home/home_view.dart';
 import 'package:responsibel/home/show_modal.dart';
 import 'package:responsibel/model_ML/model.dart';
@@ -38,43 +35,42 @@ class _MyHomePageState extends State<MyHomePage> {
   ];
 
 /*          STORE DATA TO LOCAL STORAGE its not will store to database ----------- -------- -------- -*/
-  static List<Results> _dataForMl = [];
+  // static List<Results> _dataForMl = [];
 
 /* above this code for Model tfLite flutter*/
-  late ModelTFLite modelML;
+  // late ModelTFLite modelML;
 
-  Future<void> _getData() async {
-    // this error has solve becaus data before 2024 is int therefore dataML is solve
-    /*below this dataFetch will be arise exception int not sigh to doubel if datetime sart begin in yer 2023 */
+  // Future<void> _getData() async {
+  //   // this error has solve becaus data before 2024 is int therefore dataML is solve
+  //   /*below this dataFetch will be arise exception int not sigh to doubel if datetime sart begin in yer 2023 */
 
-    List<Results> data;
-    for (var datas in _dataModel) {
-      try {
-        data = await dataFetch(
-          name: datas.nameStock.toUpperCase(),
-          start: "2024-01-01",
-        );
+  //   List<Results> data;
+  //   for (var datas in _dataModel) {
+  //     try {
+  //       data = await dataFetch(
+  //         name: datas.nameStock.toUpperCase(),
+  //         start: "2024-01-01",
+  //       );
 
-        setState(() {
-          _dataForMl = data;
-          modelML = ModelTFLite(dataResults: _dataForMl, dataModel: _dataModel);
-        });
-      } catch (e, strackTrace) {
-        print('$e  -----------------E-------------e');
-        print('$strackTrace S');
-      }
-    }
-  }
+  //       setState(() {
+  //         _dataForMl = data;
+  //         modelML = ModelTFLite(dataResults: _dataForMl, dataModel: _dataModel);
+  //       });
+  //     } catch (e, strackTrace) {
+  //       print('$e  -----------------E-------------e');
+  //       print('$strackTrace S');
+  //     }
+  //   }
+  // }
 
-  @override
-  void initState() {
-    _getData();
-    super.initState();
-  }
+  // @override
+  // void initState() {
+  //   _getData();
+  //   super.initState();
+  // }
 
   @override
   void dispose() {
-    _dataForMl;
     super.dispose();
   }
 
