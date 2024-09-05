@@ -41,6 +41,7 @@ dependencies:
   yahoo_finance_data_reader:  ^1.0.10
   tflite_flutter: ^0.10.4
   http: ^1.2.2
+  firebase_core: ^2.24.2
 
 
 

@@ -111,7 +111,7 @@ class _ShowModalState extends State<ShowModal> {
                             Text(
                               _dateStart == null
                                   ? "DateTime Start"
-                                  : _dateStart!.toString(),
+                                  : ("$_dateStart").substring(0, 10),
                             ),
                             IconButton(
                               onPressed: _startTime,
@@ -129,7 +129,7 @@ class _ShowModalState extends State<ShowModal> {
                             Text(
                               _dateEnd == null
                                   ? "DateTime End"
-                                  : _dateEnd!.toString(),
+                                  : ("$_dateEnd").substring(0, 10),
                             ),
                             IconButton(
                               onPressed: _endTime,
@@ -173,6 +173,8 @@ class _ShowModalState extends State<ShowModal> {
                               ),
                             )
                             .toList(),
+                        // for (var data in  ColumnStock.values)
+
                         onChanged: (value) {
                           if (value == null) return;
                           setState(() {

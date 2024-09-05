@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:responsibel/data/data_user_input.dart';
 import 'package:responsibel/home/home_view.dart';
 import 'package:responsibel/home/show_modal.dart';
-import 'package:responsibel/model_ML/model.dart';
 
 /*  data have to store to data base thas is data from user in folder show_modal.dart 
    data form ml in model.dart
@@ -30,7 +29,7 @@ class _MyHomePageState extends State<MyHomePage> {
       nameStock: "goog",
       dateStart: DateTime(2024, 08, 02),
       dateEnd: DateTime.now(),
-      category: ColumnStock.open,
+      category: ColumnStock.close,
     ),
   ];
 
@@ -99,7 +98,6 @@ class _MyHomePageState extends State<MyHomePage> {
         Expanded(
           child: HomeView(
             dataModel: _dataModel,
-            dataOutput: temporaryData,
           ),
         ),
       ],
@@ -120,7 +118,6 @@ class _MyHomePageState extends State<MyHomePage> {
               color: Colors.blue,
               child: HomeView(
                 dataModel: _dataModel,
-                dataOutput: temporaryData,
               ),
             ),
           ),

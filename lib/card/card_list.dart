@@ -10,8 +10,6 @@ class CardList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ignore: unused_local_variable
-
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
@@ -64,7 +62,7 @@ class CardList extends StatelessWidget {
                 )),
                 Expanded(
                     child: Center(
-                  child: Text("${dataOutput.predictionStock}"),
+                  child: Text(dataOutput.predictionStock.toStringAsFixed(3)),
                 ))
               ],
             ),
