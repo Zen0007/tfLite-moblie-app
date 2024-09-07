@@ -149,9 +149,6 @@ class ModelTFLiteNotUsesStream {
         predictionStock: predictionStock,
       ));
 
-      print("$prediction output model");
-      print(" $predictionStock prediction");
-      print(" $lastDateStock ---lastTime");
       print("${queue.length} data queue");
       queue.removeFirst();
     }
@@ -171,7 +168,6 @@ Future<List<DataMachineLearning>> dataMachineLearning(
     print("$e fuction try not uses stream");
     print("$strackTrace try not  uses stream");
   }
-  print("${data.length} datalast");
-  print("${data.length} datapred");
+
   return data;
 }

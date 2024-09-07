@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
 import 'package:responsibel/data/data_user_input.dart';
 
 class ShowModal extends StatefulWidget {
-  const ShowModal({super.key, required this.addData});
-  final void Function(DataModel data) addData;
+  const ShowModal({super.key});
+  // final void Function(DataModel data) addData;
+
   // final void Function(DataMachineLearning data) addMl;
 
   @override
@@ -42,13 +43,20 @@ class _ShowModalState extends State<ShowModal> {
     }
 
 /*======================================={ABOVE post data to local storage}=====================================*/
-    widget.addData(
-      DataModel(
-        nameStock: _nameStock.text,
-        dateStart: _dateStart!,
-        dateEnd: _dateEnd!,
-        category: _opsionColumn,
-      ),
+    final Map<String, dynamic> dataModel = {
+      "nameStock": _nameStock.text,
+      "dateStart": _dateStart!,
+      "dateEnd": _dateEnd!,
+      "category": _opsionColumn,
+    };
+
+    final CollectionReference db =
+        FirebaseFirestore.instance.collection("user");
+    db.doc("input").set(dataModel).onError(
+      (error, stackTrace) {
+        print("$error e");
+        print("$stackTrace st");
+      },
     );
 
     Navigator.pop(context);

@@ -38,10 +38,11 @@ dependencies:
   uuid: ^4.4.2
   # ---------------------------------------------------------- dowload late
   intl: ^0.19.0
-  yahoo_finance_data_reader:  ^1.0.10
+  # yahoo_finance_data_reader:  ^1.0.10
   tflite_flutter: ^0.10.4
   http: ^1.2.2
-  firebase_core: ^2.24.2
+  firebase_core: ^3.4.0
+  cloud_firestore: ^5.4.0
 
 
 

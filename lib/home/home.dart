@@ -68,25 +68,18 @@ class _MyHomePageState extends State<MyHomePage> {
   //   super.initState();
   // }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  void _addData(DataModel data) {
-    setState(() {
-      _dataModel.add(data);
-    });
-  }
+  // void _addData(DataModel data) {
+  //   setState(() {
+  //     _dataModel.add(data);
+  //   });
+  // }
 
   void _opendSheet() {
     showModalBottomSheet(
       useSafeArea: true,
       isScrollControlled: true,
       context: context,
-      builder: (context) => ShowModal(
-        addData: _addData,
-      ),
+      builder: (context) => const ShowModal(),
     );
   }
 
@@ -131,12 +124,13 @@ class _MyHomePageState extends State<MyHomePage> {
         actions: [
           if (width <= 600)
             IconButton(
-                // showmodal
-                onPressed: _opendSheet,
-                icon: const Icon(
-                  Icons.add,
-                  size: 25,
-                ))
+              // showmodal
+              onPressed: _opendSheet,
+              icon: const Icon(
+                Icons.add,
+                size: 25,
+              ),
+            )
         ],
       ),
       body: layout,
