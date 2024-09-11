@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:responsibel/data/data_user_input.dart';
 import 'package:responsibel/home/home_view.dart';
@@ -18,20 +19,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   /*======================{ABOVE get data from local storage}=====================*/
-  static final List<DataModel> _dataModel = [
-    DataModel(
-      nameStock: "aapl",
-      dateStart: DateTime(2024, 07, 25),
-      dateEnd: DateTime.now(),
-      category: ColumnStock.open,
-    ),
-    DataModel(
-      nameStock: "goog",
-      dateStart: DateTime(2024, 08, 02),
-      dateEnd: DateTime.now(),
-      category: ColumnStock.close,
-    ),
-  ];
+  final List<DataModel> dataModel = [];
+  final db = FirebaseFirestore.instance;
 
 /*          STORE DATA TO LOCAL STORAGE its not will store to database ----------- -------- -------- -*/
   // static List<Results> _dataForMl = [];
@@ -39,47 +28,52 @@ class _MyHomePageState extends State<MyHomePage> {
 /* above this code for Model tfLite flutter*/
   // late ModelTFLite modelML;
 
-  // Future<void> _getData() async {
-  //   // this error has solve becaus data before 2024 is int therefore dataML is solve
-  //   /*below this dataFetch will be arise exception int not sigh to doubel if datetime sart begin in yer 2023 */
+  void getData() async {
+    print("data on");
+    // this error has solve becaus data before 2024 is int therefore dataML is solve
+    /*below this dataFetch will be arise exception int not sigh to doubel if datetime sart begin in yer 2023 */
+    try {
+      var dataDb = await db.collection("user").get();
+      for (var data in dataDb.docs) {
+        var category = ColumnStock.close;
+        print("${data['nameStock']} -----------------------1");
+        print("${data['dateStart']} -------------------------2");
+        print("${data['dateEnd']} -------------------------2");
+        print("${data['category']} ----------------------------3");
+        print(data.id);
+        if (data['category'] == "open") {
+          category = ColumnStock.open;
+        }
+        print(category);
+        setState(() {
+          dataModel.add(DataModel(
+            data.id,
+            nameStock: data['nameStock'],
+            dateStart: data['dateStart'],
+            dateEnd: data['dateEnd'],
+            category: category,
+          ));
+        });
+      }
+      print("complated ${dataModel.length}");
+    } catch (e, strackTrace) {
+      print('$e  -----------------E-------------e');
+      print('$strackTrace S');
+    }
+  }
 
-  //   List<Results> data;
-  //   for (var datas in _dataModel) {
-  //     try {
-  //       data = await dataFetch(
-  //         name: datas.nameStock.toUpperCase(),
-  //         start: "2024-01-01",
-  //       );
+  @override
+  void initState() {
+    getData();
+    super.initState();
+  }
 
-  //       setState(() {
-  //         _dataForMl = data;
-  //         modelML = ModelTFLite(dataResults: _dataForMl, dataModel: _dataModel);
-  //       });
-  //     } catch (e, strackTrace) {
-  //       print('$e  -----------------E-------------e');
-  //       print('$strackTrace S');
-  //     }
-  //   }
-  // }
-
-  // @override
-  // void initState() {
-  //   _getData();
-  //   super.initState();
-  // }
-
-  // void _addData(DataModel data) {
-  //   setState(() {
-  //     _dataModel.add(data);
-  //   });
-  // }
-
-  void _opendSheet() {
+  void addShowModal() {
     showModalBottomSheet(
       useSafeArea: true,
       isScrollControlled: true,
       context: context,
-      builder: (context) => const ShowModal(),
+      builder: (context) => ShowModal(addData: getData),
     );
   }
 
@@ -90,7 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
       children: [
         Expanded(
           child: HomeView(
-            dataModel: _dataModel,
+            dataModel: dataModel,
           ),
         ),
       ],
@@ -110,14 +104,14 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Container(
               color: Colors.blue,
               child: HomeView(
-                dataModel: _dataModel,
+                dataModel: dataModel,
               ),
             ),
           ),
         ],
       );
     }
-
+    print("rebuild home");
     return Scaffold(
       appBar: AppBar(
         title: const Text("Stock Prediction"),
@@ -125,7 +119,7 @@ class _MyHomePageState extends State<MyHomePage> {
           if (width <= 600)
             IconButton(
               // showmodal
-              onPressed: _opendSheet,
+              onPressed: addShowModal,
               icon: const Icon(
                 Icons.add,
                 size: 25,

@@ -12,6 +12,22 @@ class HomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print(dataModel.length);
+    print("show");
+
+    try {} catch (e) {}
+    if (dataModel.isEmpty) {
+      return const Center(
+        child: Text(
+          "you have add some data",
+          style: TextStyle(
+            fontWeight: FontWeight.w300,
+            fontSize: 20,
+          ),
+        ),
+      );
+    }
+
     return FutureBuilder(
       future: process(dataModel),
       builder: (context, snapshot) {
@@ -59,6 +75,10 @@ class HomeView extends StatelessWidget {
                 Text("data not available"),
               ],
             ),
+          );
+        } else if (snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text("data isempaty"),
           );
         } else {
           print("d");

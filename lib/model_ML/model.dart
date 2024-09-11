@@ -19,37 +19,34 @@ Stream<List<double>> _dataStream(List<DataModel> dataModel) async* {
   for (var data in dataModel) {
     try {
       List<Results> dataResult = await dataFetch(
-        name: data.nameStock.toUpperCase(),
-        start: "${data.dateStart}",
-      );
+          name: data.nameStock.toUpperCase(),
+          start: data.dateStart,
+          end: data.dateEnd);
 
       for (var addQueue in dataResult) {
-        print("${columnStock[data.category]!} 00");
         if (columnStock[data.category]! == 'Open') {
           listDataOpen.add(addQueue.open);
+          await Future.delayed(const Duration(seconds: 2));
         } else if (columnStock[data.category]! == 'Close') {
+          await Future.delayed(const Duration(seconds: 2));
           listDataClose.add(addQueue.close);
         }
       }
-      print(listDataClose);
-      print(listDataOpen);
     } catch (e, strackTrace) {
       print(e);
       print(strackTrace);
     }
   }
+  print("$listDataClose -data close");
+  print("$listDataOpen  --------data open");
+  resulst.add(listDataClose);
+  resulst.add(listDataOpen);
 
-  if (listDataClose.isNotEmpty) {
-    resulst.add(listDataClose);
-  }
-  if (listDataOpen.isNotEmpty) {
-    resulst.add(listDataOpen);
-  }
-  print("${resulst.length} 888");
+  print("$resulst           results");
   while (resulst.isNotEmpty) {
+    await Future.delayed(const Duration(seconds: 2));
     yield resulst.first;
     resulst.removeFirst();
-    await Future.delayed(const Duration(seconds: 5));
   }
 }
 
@@ -64,12 +61,13 @@ Future<List<DataMachineLearning>> process(List<DataModel> dataModel) {
     stream.listen(
       (event) async {
         queue.add(event);
-        print("${queue.length} queue");
 
+        print("${queue.length} queue");
+        int cound = 0;
         while (queue.isNotEmpty) {
           final List<double> dataList = [];
           for (var data in queue) {
-            print("${data.length} data");
+            print("$data data");
             dataList.addAll(data);
           }
           double minData = dataList.reduce(min);
@@ -109,6 +107,7 @@ Future<List<DataMachineLearning>> process(List<DataModel> dataModel) {
 
           try {
             model.run(input, output);
+
             print("$model  comperter");
           } catch (e) {
             print("$e  e");
@@ -137,7 +136,10 @@ Future<List<DataMachineLearning>> process(List<DataModel> dataModel) {
           print("${queue.length}  queue");
 
           queue.removeFirst();
+          cound++;
         }
+
+        print("$cound     cound");
       },
       onDone: () => controler.complete(pred),
       onError: (error) => controler.completeError(error),

@@ -44,10 +44,10 @@ class CardList extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Center(child: Text("${dataModel.dateStarts}")),
+                  child: Center(child: Text(dataModel.dateStart)),
                 ),
                 Expanded(
-                  child: Center(child: Text("${dataModel.dateEnds}")),
+                  child: Center(child: Text(dataModel.dateEnd)),
                 )
               ],
             ),

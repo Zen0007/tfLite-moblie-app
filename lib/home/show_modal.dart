@@ -1,24 +1,78 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:responsibel/data/data_user_input.dart';
 
 class ShowModal extends StatefulWidget {
-  const ShowModal({super.key});
-  // final void Function(DataModel data) addData;
-
-  // final void Function(DataMachineLearning data) addMl;
+  final void Function() addData;
+  const ShowModal({super.key, required this.addData});
 
   @override
   State<ShowModal> createState() => _ShowModalState();
 }
 
 class _ShowModalState extends State<ShowModal> {
-  final _nameStock = TextEditingController();
+  final TextEditingController _nameStock = TextEditingController();
   DateTime? _dateStart;
   DateTime? _dateEnd;
   ColumnStock _opsionColumn = ColumnStock.open;
-  void _sumbitData() {
+  String name = '';
+
+  void _sumbitData() async {
     if (_nameStock.text.isEmpty || _dateStart == null || _dateEnd == null) {
+      platfrom();
+      return;
+    }
+
+/*======================================={ABOVE post data to local storage}=====================================*/
+    final Map<String, dynamic> dataModel = {
+      "nameStock": name,
+      "dateStart": "${_dateStart!}".substring(0, 10),
+      "dateEnd": "${_dateEnd!}".substring(0, 10),
+      "category": _opsionColumn.name,
+    };
+
+    final CollectionReference db =
+        FirebaseFirestore.instance.collection("user");
+    db.doc().set(dataModel).onError(
+      (error, stackTrace) {
+        print("$error el");
+        print("$stackTrace st");
+      },
+    );
+    print("$_dateStart");
+    widget.addData;
+
+//     String id = '';
+//    var dataId= await db.get();
+// for (var element in dataId.docs) {
+
+// }
+    print("$id      -id");
+    Navigator.of(context).pop();
+  }
+
+  void platfrom() {
+    if (Platform.isIOS) {
+      showCupertinoDialog(
+        context: context,
+        builder: (context) => CupertinoAlertDialog(
+          title: const Text("invalid input "),
+          content: const Text("please fill all the input before in summbit"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text("oke"),
+            ),
+          ],
+        ),
+      );
+      return;
+    } else {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -41,25 +95,6 @@ class _ShowModalState extends State<ShowModal> {
       );
       return;
     }
-
-/*======================================={ABOVE post data to local storage}=====================================*/
-    final Map<String, dynamic> dataModel = {
-      "nameStock": _nameStock.text,
-      "dateStart": _dateStart!,
-      "dateEnd": _dateEnd!,
-      "category": _opsionColumn,
-    };
-
-    final CollectionReference db =
-        FirebaseFirestore.instance.collection("user");
-    db.doc("input").set(dataModel).onError(
-      (error, stackTrace) {
-        print("$error e");
-        print("$stackTrace st");
-      },
-    );
-
-    Navigator.pop(context);
   }
 
   void _startTime() async {
@@ -160,6 +195,10 @@ class _ShowModalState extends State<ShowModal> {
                           decoration: const InputDecoration(
                             label: Text('Symbol Stock'),
                           ),
+                          onChanged: (value) {
+                            name = value;
+                            print("rebuild8");
+                          },
                         ),
                       ),
                     ],
@@ -186,6 +225,7 @@ class _ShowModalState extends State<ShowModal> {
                         onChanged: (value) {
                           if (value == null) return;
                           setState(() {
+                            print(_dateStart);
                             _opsionColumn = value;
                           });
                         },
