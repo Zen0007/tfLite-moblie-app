@@ -66,16 +66,6 @@ class _MyHomePageState extends State<MyHomePage> {
   /*======================{ABOVE get data from local storage}=====================*/
 
 /*          STORE DATA TO LOCAL STORAGE its not will store to database ----------- -------- -------- -*/
-  // static List<Results> _dataForMl = [];
-
-/* above this code for Model tfLite flutter*/
-  // late ModelTFLite modelML;
-
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   getData();
-  // }
 
   void addShowModal() {
     showModalBottomSheet(

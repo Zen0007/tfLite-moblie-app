@@ -10,7 +10,7 @@ class HomeView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      /*below this function will return data from model*/
+      /*below this function will return data from collection database user*/
       future: getDataFireStore(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -76,21 +76,3 @@ class HomeView extends StatelessWidget {
     );
   }
 }
-
-
-
-//  StreamBuilder(
-//       stream: resultsDataFromModel(dataModel),
-//       builder: (context, snapshot) {
-//         if (snapshot.hasData) {
-//           return ListView.builder(
-//             itemCount: snapshot.data!.length,
-//             itemBuilder: (context, index) {
-//               CardList(
-//                   dataModel: dataModel[index],
-//                   dataOutput: snapshot.data![index]);
-//             },
-//           );
-//         }
-//       },
-//     );
