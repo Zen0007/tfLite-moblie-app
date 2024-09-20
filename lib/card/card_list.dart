@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:responsibel/data/data_model.dart';
+//import 'package:responsibel/data/data_model.dart';
 import 'package:responsibel/data/data_user_input.dart';
 
 class CardList extends StatelessWidget {
-  const CardList(
-      {super.key, required this.dataModel, required this.dataOutput});
+  const CardList({super.key, required this.dataModel});
   final DataModel dataModel;
-  final DataMachineLearning dataOutput;
+  //final DataMachineLearning dataOutput;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +18,11 @@ class CardList extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Center(child: Text(dataModel.nameStock.toUpperCase())),
+                  child: Center(
+                      child: Text(
+                    dataModel.nameStock.toUpperCase(),
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  )),
                 ),
                 const Spacer(),
                 Text(
@@ -39,7 +42,7 @@ class CardList extends StatelessWidget {
               ],
             ),
             const SizedBox(
-              height: 5,
+              height: 15,
             ),
             Row(
               children: [
@@ -52,17 +55,37 @@ class CardList extends StatelessWidget {
               ],
             ),
             const SizedBox(
-              height: 20,
+              height: 15,
+            ),
+            Row(
+              children: [
+                const Expanded(
+                    child: Center(
+                  child: Text(
+                    "PREDICTION",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                )),
+                Expanded(
+                    child: Center(
+                  child: Text("last ${columnStock[dataModel.category]!}"),
+                ))
+              ],
+            ),
+            const SizedBox(
+              height: 15,
             ),
             Row(
               children: [
                 Expanded(
                     child: Center(
-                  child: Text("${dataOutput.lastDate}"),
+                  child: Text(dataModel.pred!.toStringAsFixed(2)),
+                  // child: Text("test pred"),
                 )),
                 Expanded(
                     child: Center(
-                  child: Text(dataOutput.predictionStock.toStringAsFixed(3)),
+                  child: Text("${dataModel.last}"),
+                  // child: Text("test last"),
                 ))
               ],
             ),

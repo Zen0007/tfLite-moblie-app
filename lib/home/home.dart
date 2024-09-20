@@ -1,12 +1,57 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+
 import 'package:responsibel/data/data_user_input.dart';
 import 'package:responsibel/home/home_view.dart';
 import 'package:responsibel/home/show_modal.dart';
+import 'package:responsibel/model_ML/model.dart';
 
 /*  data have to store to data base thas is data from user in folder show_modal.dart 
    data form ml in model.dart
 */
+
+void getData() async {
+  print("data on");
+  final List<DataModel> dataModel = [];
+  /*this error has solve becaus data before 2024 is int therefore dataML is solve*/
+  /*below this dataFetch will be arise exception int not sigh to doubel if datetime sart begin in yer 2023 */
+  final db = FirebaseFirestore.instance;
+  var dataDb = await db.collection("user").get();
+  for (var data in dataDb.docs) {
+    var category = ColumnStock.close;
+    print("${data['nameStock']} -----------------------1");
+    print("${data['dateStart']} -------------------------2");
+    print("${data['dateEnd']} -------------------------2");
+    print("${data['category']} ----------------------------3");
+    print(data.id);
+    print("${data["output_model"]}         4");
+    if (data['category'] == "open") {
+      category = ColumnStock.open;
+    }
+    print(category);
+
+    dataModel.add(DataModel(
+      uuid: data.id,
+      nameStock: data['nameStock'],
+      dateStart: data['dateStart'],
+      dateEnd: data['dateEnd'],
+      category: category,
+      last: data["output_model"],
+    ));
+  }
+  try {
+    List<double> model = await process(
+      nameStock: "aapl",
+      dateStart: "2024-08-01",
+      dateEnd: "2024-09-16",
+      colums: ColumnStock.close,
+    );
+    print("${model.first}  data home ");
+  } catch (e, strackTrace) {
+    debugPrint("$e");
+    debugPrint("$strackTrace");
+  }
+}
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -19,8 +64,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   /*======================{ABOVE get data from local storage}=====================*/
-  final List<DataModel> dataModel = [];
-  final db = FirebaseFirestore.instance;
 
 /*          STORE DATA TO LOCAL STORAGE its not will store to database ----------- -------- -------- -*/
   // static List<Results> _dataForMl = [];
@@ -28,45 +71,11 @@ class _MyHomePageState extends State<MyHomePage> {
 /* above this code for Model tfLite flutter*/
   // late ModelTFLite modelML;
 
-  void getData() async {
-    print("data on");
-    // this error has solve becaus data before 2024 is int therefore dataML is solve
-    /*below this dataFetch will be arise exception int not sigh to doubel if datetime sart begin in yer 2023 */
-    try {
-      var dataDb = await db.collection("user").get();
-      for (var data in dataDb.docs) {
-        var category = ColumnStock.close;
-        print("${data['nameStock']} -----------------------1");
-        print("${data['dateStart']} -------------------------2");
-        print("${data['dateEnd']} -------------------------2");
-        print("${data['category']} ----------------------------3");
-        print(data.id);
-        if (data['category'] == "open") {
-          category = ColumnStock.open;
-        }
-        print(category);
-        setState(() {
-          dataModel.add(DataModel(
-            data.id,
-            nameStock: data['nameStock'],
-            dateStart: data['dateStart'],
-            dateEnd: data['dateEnd'],
-            category: category,
-          ));
-        });
-      }
-      print("complated ${dataModel.length}");
-    } catch (e, strackTrace) {
-      print('$e  -----------------E-------------e');
-      print('$strackTrace S');
-    }
-  }
-
-  @override
-  void initState() {
-    getData();
-    super.initState();
-  }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   getData();
+  // }
 
   void addShowModal() {
     showModalBottomSheet(
@@ -80,12 +89,10 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    Widget layout = Column(
+    Widget layout = const Column(
       children: [
         Expanded(
-          child: HomeView(
-            dataModel: dataModel,
-          ),
+          child: HomeView(),
         ),
       ],
     );
@@ -103,9 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
             flex: 2,
             child: Container(
               color: Colors.blue,
-              child: HomeView(
-                dataModel: dataModel,
-              ),
+              child: const HomeView(),
             ),
           ),
         ],

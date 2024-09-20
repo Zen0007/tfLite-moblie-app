@@ -1,9 +1,9 @@
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:responsibel/data/data_user_input.dart';
+import 'package:responsibel/model_ML/model.dart';
 
 class ShowModal extends StatefulWidget {
   final void Function() addData;
@@ -18,41 +18,80 @@ class _ShowModalState extends State<ShowModal> {
   DateTime? _dateStart;
   DateTime? _dateEnd;
   ColumnStock _opsionColumn = ColumnStock.open;
-  String name = '';
 
   void _sumbitData() async {
     if (_nameStock.text.isEmpty || _dateStart == null || _dateEnd == null) {
       platfrom();
       return;
     }
+    print("${_nameStock.text} -----------------------1");
+    print("${_dateStart} -------------------------2");
+    print("${_dateEnd} -------------------------2");
+    print("${_opsionColumn} ----------------------------3");
+    /*======================================={ABOVE post data to local firestore}=====================================*/
+    try {
+      List<double> model = await process(
+        nameStock: _nameStock.text,
+        dateStart: "$_dateStart",
+        dateEnd: "$_dateEnd",
+        colums: _opsionColumn,
+      );
 
-/*======================================={ABOVE post data to local storage}=====================================*/
-    final Map<String, dynamic> dataModel = {
-      "nameStock": name,
-      "dateStart": "${_dateStart!}".substring(0, 10),
-      "dateEnd": "${_dateEnd!}".substring(0, 10),
-      "category": _opsionColumn.name,
-    };
+      final Map<String, dynamic> dataModel = {
+        "nameStock": _nameStock.text,
+        "dateStart": "${_dateStart!}".substring(0, 10),
+        "dateEnd": "${_dateEnd!}".substring(0, 10),
+        "category": _opsionColumn.name,
+        "output_model": model,
+      };
 
-    final CollectionReference db =
-        FirebaseFirestore.instance.collection("user");
-    db.doc().set(dataModel).onError(
-      (error, stackTrace) {
-        print("$error el");
-        print("$stackTrace st");
-      },
-    );
-    print("$_dateStart");
-    widget.addData;
+      final CollectionReference db =
+          FirebaseFirestore.instance.collection("user");
+      db.doc().set(dataModel).onError(
+        (error, stackTrace) {
+          print("$error el");
+          print("$stackTrace st");
+        },
+      );
 
-//     String id = '';
-//    var dataId= await db.get();
-// for (var element in dataId.docs) {
+      print("$dataModel  .................");
+    } catch (e, strackTrace) {
+      debugPrint("$e..................");
+      debugPrint("$strackTrace .........");
+    }
 
-// }
-    print("$id      -id");
+    if (!mounted) {
+      return;
+    }
+
     Navigator.of(context).pop();
+    // getData();
   }
+
+  // void getData() async {
+  //   print("data on");
+
+  //   final List<DataModel> list = [
+  //     DataModel(
+  //         nameStock: "aapl",
+  //         dateStart: _dateStart.toString(),
+  //         dateEnd: _dateEnd.toString(),
+  //         category: _opsionColumn)
+  //   ];
+  //   //
+  //   final model = await process(
+  //     nameStock: list.first.nameStock,
+  //     colums: list.first.category,
+  //     dateStart: list.first.dateStart,
+  //     dateEnd: list.first.dateEnd,
+  //   );
+
+  //   for (var element in model) {
+  //     print("complated ml $element");
+  //     print("complated last date $element");
+  //   }
+  //   print("succes ${model} ${model}");
+  // }
 
   void platfrom() {
     if (Platform.isIOS) {
@@ -195,10 +234,6 @@ class _ShowModalState extends State<ShowModal> {
                           decoration: const InputDecoration(
                             label: Text('Symbol Stock'),
                           ),
-                          onChanged: (value) {
-                            name = value;
-                            print("rebuild8");
-                          },
                         ),
                       ),
                     ],

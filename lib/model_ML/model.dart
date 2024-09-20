@@ -1,6 +1,7 @@
 import 'dart:collection';
+
+import 'package:flutter/foundation.dart';
 import 'package:responsibel/data/data_model.dart';
-import 'package:responsibel/data/data_results.dart';
 import 'package:responsibel/data/data_user_input.dart';
 import 'package:responsibel/fetch_api/fetch_api_stock.dart';
 import 'package:responsibel/model_ML/reshape.dart';
@@ -8,149 +9,203 @@ import 'dart:math';
 import 'dart:async';
 import 'package:tflite_flutter/tflite_flutter.dart';
 
-final List<DataMachineLearning> temporaryData = [];
+Future<List<double>> process(
+    {required String nameStock,
+    required String dateStart,
+    required String dateEnd,
+    required ColumnStock colums}) async {
+  final Queue<List<double>> queue = Queue<List<double>>();
+  // Stream for listening to data from the API
+  final Stream<List<double>> stream = dataStream01(
+      nameStock: nameStock,
+      dateStart: dateStart,
+      dateEnd: dateEnd,
+      colums: colums);
+  final List<double> pred = [];
 
-//
+  await for (var element in stream) {
+    if (element.isNotEmpty) {
+      queue.add(element);
+    }
 
-Stream<List<double>> _dataStream(List<DataModel> dataModel) async* {
-  final Queue<List<double>> resulst = Queue<List<double>>();
-  final List<double> listDataOpen = [];
-  final List<double> listDataClose = [];
-  for (var data in dataModel) {
-    try {
-      List<Results> dataResult = await dataFetch(
-          name: data.nameStock.toUpperCase(),
-          start: data.dateStart,
-          end: data.dateEnd);
-
-      for (var addQueue in dataResult) {
-        if (columnStock[data.category]! == 'Open') {
-          listDataOpen.add(addQueue.open);
-          await Future.delayed(const Duration(seconds: 2));
-        } else if (columnStock[data.category]! == 'Close') {
-          await Future.delayed(const Duration(seconds: 2));
-          listDataClose.add(addQueue.close);
-        }
+    while (queue.isNotEmpty) {
+      final List<double> dataList = [];
+      for (var data in queue) {
+        dataList.addAll(data);
       }
-    } catch (e, strackTrace) {
-      print(e);
-      print(strackTrace);
+      double minData = dataList.reduce((a, b) => a < b ? a : b);
+      double maxData = dataList.reduce((a, b) => a > b ? a : b);
+
+      List<double> normalizedData = [];
+      for (var i = 0; i < dataList.length; i++) {
+        normalizedData.add((dataList[i] - minData) / (maxData - minData));
+      }
+
+      int nSteps = 3;
+      List<List<double>> newData = [];
+
+      for (var i = (normalizedData.length) - nSteps - 1; i > 0; i--) {
+        var temp = normalizedData.sublist(i, i + nSteps);
+        newData.add(temp);
+      }
+
+      final reshapeShape = [8, 1];
+      final int requiredLength = reshapeShape.reduce(
+        (value, element) => value * element,
+      );
+
+      if (newData.length % requiredLength != 0) {
+        newData = newData.sublist(0, -newData.length % requiredLength);
+      }
+
+      newData = reshape(list: newData, col: 1, row: 8);
+      final input = newData.reshape(reshapeShape);
+      final output = List.filled(1, 0).reshape([1, 1]);
+
+      /*below  for model machine learning  */
+      Interpreter model = await Interpreter.fromAsset('assets/model.tflite');
+
+      /*this try catch for make sure is run */
+      try {
+        model.run(input, output);
+      } catch (e) {
+        debugPrint("$e  e");
+      } finally {
+        model.close();
+      }
+
+      /* beloe for prediction data from user*/
+      final double prediction = output.first[0] * (maxData - minData) + minData;
+      final double predictionResults = prediction * 0.977;
+      final double lastStock = dataList.last;
+
+      pred.add(predictionResults);
+      pred.add(lastStock);
+
+      queue.removeFirst();
     }
   }
-  print("$listDataClose -data close");
-  print("$listDataOpen  --------data open");
-  resulst.add(listDataClose);
-  resulst.add(listDataOpen);
 
-  print("$resulst           results");
-  while (resulst.isNotEmpty) {
-    await Future.delayed(const Duration(seconds: 2));
-    yield resulst.first;
-    resulst.removeFirst();
-  }
+  // Add a timeout or some condition to ensure completer completes even if onDone is not called
+  print("${pred.length}          data model");
+  return pred;
 }
 
-Future<List<DataMachineLearning>> process(List<DataModel> dataModel) {
+Future<List<DataMachineLearning>> processOne({
+  required String nameStock,
+  required String dateStart,
+  required String dateEnd,
+  required ColumnStock colums,
+}) {
   final Queue<List<double>> queue = Queue<List<double>>();
   final Completer<List<DataMachineLearning>> controler =
       Completer<List<DataMachineLearning>>();
 
+  /* below this stream for listen data from api stock*/
+  final Stream<List<double>> stream = dataStream01(
+      nameStock: nameStock,
+      dateStart: dateStart,
+      dateEnd: dateEnd,
+      colums: colums);
   final List<DataMachineLearning> pred = [];
-  try {
-    final Stream<List<double>> stream = _dataStream(dataModel);
-    stream.listen(
-      (event) async {
-        queue.add(event);
+  bool check = false;
+  stream.listen(
+    (event) async {
+      queue.add(event);
 
-        print("${queue.length} queue");
-        int cound = 0;
-        while (queue.isNotEmpty) {
-          final List<double> dataList = [];
-          for (var data in queue) {
-            print("$data data");
-            dataList.addAll(data);
-          }
-          double minData = dataList.reduce(min);
-          double maxData = dataList.reduce(max);
+      print("queue    $queue");
+      /*below this for proses data from api to model*/
+      while (queue.isNotEmpty) {
+        final List<double> dataList = [];
+        for (var data in queue) {
+          dataList.addAll(data);
+        }
+        double minData = dataList.reduce(min);
+        double maxData = dataList.reduce(max);
 
-          List<double> normalisasiData = [];
-          for (var i = 0; i < dataList.length; i++) {
-            normalisasiData.add((dataList[i] - minData) / (maxData - minData));
-          }
+        List<double> normalisasiData = [];
+        for (var i = 0; i < dataList.length; i++) {
+          normalisasiData.add((dataList[i] - minData) / (maxData - minData));
+        }
 
-          int nSteps = 3;
-          List<List<double>> newData = [];
+        int nSteps = 3;
+        List<List<double>> newData = [];
 
-          for (var i = (normalisasiData.length) - nSteps - 1; i > 0; i--) {
-            var tem = normalisasiData.sublist(i, i + nSteps);
-            newData.add(tem);
-          }
+        for (var i = (normalisasiData.length) - nSteps - 1; i > 0; i--) {
+          var tem = normalisasiData.sublist(i, i + nSteps);
+          newData.add(tem);
+        }
 
-          final reshapeShape = [8, 1];
-          final int requiredLength = reshapeShape.reduce(
-            (value, element) => value * element,
-          );
+        final reshapeShape = [8, 1];
+        final int requiredLength = reshapeShape.reduce(
+          (value, element) => value * element,
+        );
 
-          if (newData.length % requiredLength != 0) {
-            newData = newData.sublist(0, -newData.length % requiredLength);
-          }
+        if (newData.length % requiredLength != 0) {
+          final validLen = newData.length - (newData.length % requiredLength);
+          newData = newData.sublist(0, validLen);
+        }
 
-          newData = reshape(list: newData, col: 1, row: 8);
+        newData = reshape(list: newData, col: 1, row: 8);
 
-          /* below reshpe data in newData*/
-          final input = newData.reshape(reshapeShape);
-          final output = List.filled(1, 0).reshape([1, 1]);
+        /* below reshpe data in newData*/
+        final input = newData.reshape(reshapeShape);
+        final output = List.filled(1, 0).reshape([1, 1]);
 
-          /*below  for model machine learning  */
-          Interpreter model =
-              await Interpreter.fromAsset('assets/model.tflite');
+        /*below  for model machine learning  */
+        Interpreter model = await Interpreter.fromAsset('assets/model.tflite');
 
-          try {
-            model.run(input, output);
+        /*this try catch for make sure is run */
+        try {
+          model.run(input, output);
+        } catch (e) {
+          debugPrint("$e  e");
+        }
 
-            print("$model  comperter");
-          } catch (e) {
-            print("$e  e");
-          }
-
-          /* beloe for prediction data from user*/
-          final double prediction =
-              output.first[0] * (maxData - minData) + minData;
-          final double predictionResults = prediction * 0.977;
-          final double lastStock = dataList.last;
-          // below for send data to database
-          /*
+        /* beloe for prediction data from user*/
+        final double prediction =
+            output.first[0] * (maxData - minData) + minData;
+        final double predictionResults = prediction * 0.977;
+        final double lastStock = dataList.last;
+        // below for send data to database
+        /*
          below code for send data to list <dataModel> 
         DataModel.add(DataModelprediction:predictionStock,LastOpen:lastStock))
         */
 
-          pred.add(
-            DataMachineLearning(
-              lastDate: lastStock,
-              predictionStock: predictionResults,
-            ),
-          );
+        pred.add(DataMachineLearning(
+          lastDate: lastStock,
+          predictionStock: predictionResults,
+        ));
 
-          print("$prediction output model");
-          print("${pred.length} pred2");
-          print("${queue.length}  queue");
-
-          queue.removeFirst();
-          cound++;
-        }
-
-        print("$cound     cound");
-      },
-      onDone: () => controler.complete(pred),
-      onError: (error) => controler.completeError(error),
-    );
-  } catch (e, strackTrace) {
-    print(e);
-    print(strackTrace);
-  }
-
-  // print("${.length}\n pred");
-
+        queue.removeFirst();
+        print("data pred model ${pred.length}");
+      }
+    },
+    /*below this for data in body listen is compled data can be return */
+    onDone: () {
+      if (!check) {
+        controler.complete(pred);
+        check = true;
+      }
+    },
+    onError: (error) {
+      if (!check) {
+        controler.completeError(error);
+        check = true;
+      }
+    },
+  );
+  print("pred $pred");
+  Future.delayed(
+    const Duration(seconds: 2),
+    () {
+      if (!check) {
+        controler.complete(pred);
+        check = true;
+      }
+    },
+  );
   return controler.future;
 }
 
@@ -348,5 +403,58 @@ Future<List<DataMachineLearning>> process(List<DataModel> dataModel) {
 //     print("${pred.length}  pred");
 
 //     yield pred;
+//   }
+// }
+
+
+
+
+// Stream<List<double>> _dataStream(List<DataModel> dataModel) async* {
+//   final Queue<List<double>> resulst = Queue<List<double>>();
+//   final List<double> listDataOpen = [];
+//   final List<double> listDataClose = [];
+
+//   /*beloe this for loop for get data dataModel this data model contain input user
+//   and i uses for multifel resques to api and store to queue
+//   */
+
+//   bool check = true;
+//   while (check) {
+//     for (var data in dataModel) {
+//       try {
+//         List<Results> dataResult = await dataFetch(
+//             name: data.nameStock.toUpperCase(),
+//             start: data.dateStart,
+//             end: data.dateEnd);
+
+//         /*below chek if data in open store to listOpen and not store to clese*/
+//         for (var addQueue in dataResult) {
+//           if (columnStock[data.category]! == 'Open') {
+//             listDataOpen.add(addQueue.open);
+//             await Future.delayed(const Duration(seconds: 2));
+//           } else if (columnStock[data.category]! == 'Close') {
+//             await Future.delayed(const Duration(seconds: 2));
+//             listDataClose.add(addQueue.close);
+//           }
+//         }
+//       } catch (e, strackTrace) {
+//         print(e);
+//         print(strackTrace);
+//       }
+//     }
+//     check = false;
+//   }
+
+//   print("$listDataClose -data close");
+//   print("$listDataOpen  --------data open");
+//   resulst.add(listDataClose);
+//   resulst.add(listDataOpen);
+
+//   print("$resulst           results");
+//   /*Below for return data for queue*/
+//   while (resulst.isNotEmpty) {
+//     await Future.delayed(const Duration(seconds: 2));
+//     yield resulst.first;
+//     resulst.removeFirst();
 //   }
 // }

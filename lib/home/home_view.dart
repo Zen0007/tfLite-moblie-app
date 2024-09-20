@@ -1,35 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:responsibel/card/card_list.dart';
-import 'package:responsibel/data/data_user_input.dart';
-import 'package:responsibel/model_ML/model.dart';
+import 'package:responsibel/fetch_api/fetch_data_firestore.dart';
 
 class HomeView extends StatelessWidget {
   const HomeView({
     super.key,
-    required this.dataModel,
   });
-  final List<DataModel> dataModel;
 
   @override
   Widget build(BuildContext context) {
-    print(dataModel.length);
-    print("show");
-
-    try {} catch (e) {}
-    if (dataModel.isEmpty) {
-      return const Center(
-        child: Text(
-          "you have add some data",
-          style: TextStyle(
-            fontWeight: FontWeight.w300,
-            fontSize: 20,
-          ),
-        ),
-      );
-    }
-
     return FutureBuilder(
-      future: process(dataModel),
+      /*below this function will return data from model*/
+      future: getDataFireStore(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           print("a");
@@ -85,8 +67,7 @@ class HomeView extends StatelessWidget {
           return ListView.builder(
             itemCount: snapshot.data!.length,
             itemBuilder: (context, index) => CardList(
-              dataModel: dataModel[index],
-              dataOutput: snapshot.data![index],
+              dataModel: snapshot.data![index],
             ),
             /*Above cart List will have replace to dismisSebel*/
           );

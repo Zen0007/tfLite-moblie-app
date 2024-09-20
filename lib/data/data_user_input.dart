@@ -10,15 +10,19 @@ class DataModel {
   final String dateStart;
   final String dateEnd;
   final ColumnStock category;
+  final double? pred;
+  final double? last;
   /*above this catehory create lete if know to conpert enum to string*/
-  final String uuid;
+  final String? uuid;
 
-  DataModel(
-    this.uuid, {
+  DataModel({
     required this.nameStock,
     required this.dateStart,
     required this.dateEnd,
     required this.category,
+    this.last,
+    this.pred,
+    this.uuid,
   });
 }
 
